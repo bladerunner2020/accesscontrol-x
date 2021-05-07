@@ -31,6 +31,45 @@ AccessControl.registerAction = function registerAction(name) {
   };
 };
 
+AccessControl.prototype.getGrantsAsArray = function getGrantsAsArray(role) {
+  const result = [];
+
+  if (Array.isArray(role)) {
+    role.forEach((r) => {
+      result.push(...this.getGrantsAsArray(r));
+    });
+    return result;
+  }
+
+  const grantObject = this.getGrants();
+  if (role) {
+    const roleGrants = grantObject[role];
+    if (roleGrants.$extend) {
+      roleGrants.$extend.forEach((extendedRole) => {
+        result.push(...this.getGrantsAsArray(extendedRole).map((res) => ({ ...res, role })));
+      });
+    }
+    Object.keys(roleGrants).forEach((resource) => {
+      if (resource === '$extend') return;
+      const actionsObject = roleGrants[resource];
+      if (actions) {
+        Object.keys(actionsObject).forEach((action) => {
+          result.push({
+            role, resource, action, attributes: actionsObject[action]
+          });
+        });
+      }
+    });
+    return result;
+  }
+
+  Object.keys(grantObject).forEach((r) => {
+    result.push(...this.getGrantsAsArray(r));
+  });
+
+  return result;
+};
+
 Access.prototype.any = function any(resource, attributes) {
   Object.keys(Action).forEach((action) => this._prepareAndCommit(Action[action], Possession.ANY, resource, attributes));
   return this;
