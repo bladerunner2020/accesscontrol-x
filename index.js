@@ -1,7 +1,8 @@
 /* eslint-disable func-names, no-underscore-dangle */
 const AccessControl = require('accesscontrol');
-const { Access, Query } = require('accesscontrol/lib/core');
+const { Access, Query, Permission } = require('accesscontrol/lib/core');
 const { actions } = require('accesscontrol/lib/enums');
+const objectPath = require('object-path');
 
 const { Action, Possession } = AccessControl;
 
@@ -88,6 +89,13 @@ Query.prototype._getPermission = function _getPermission(action, possession, res
     const resourcePath = resourceChain.slice(0, index + 1).join(':');
     return this.__getPermission(action, possession, resourcePath);
   }, {});
+};
+
+Permission.prototype.check = function(attribute) {
+  const obj = {};
+  objectPath.set(obj, attribute, 1);
+
+  return objectPath.get(this.filter(obj), attribute) === 1;
 };
 
 module.exports = AccessControl;
