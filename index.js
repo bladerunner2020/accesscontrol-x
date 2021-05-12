@@ -83,6 +83,17 @@ Access.prototype.own = function own(resource, attributes) {
 
 Query.prototype.__getPermission = Query.prototype._getPermission;
 Query.prototype._getPermission = function _getPermission(action, possession, resource) {
+  if (Array.isArray(resource)) {
+    const count = resource.length;
+    let permission;
+    for (let i = 0; i < count; i++) {
+      permission = this._getPermission(action, possession, resource[i]);
+      if (permission.granted) return permission;
+    }
+    // not granted
+    return permission;
+  }
+
   const resourceChain = resource.split(':');
   return resourceChain.reduce((acc, item, index) => {
     if (acc.granted) return acc;

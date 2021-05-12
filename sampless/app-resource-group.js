@@ -49,3 +49,8 @@ console.log(` => create any zone1: ${ac.can('admin').createAny('booking:meeting-
 console.log(` => deleate any: ${ac.can('admin').deleteAny('booking').granted}`);
 console.log(` => deleate any meeting-room: ${ac.can('admin').deleteAny('booking:meeting-room').granted}`);
 console.log(` => deleate any zone1: ${ac.can('admin').deleteAny('booking:meeting-room:zone1').granted}`);
+
+console.log('user (check many resources)');
+
+console.log(` => view any meeting-room: ${ac.can('user')
+  .updateOwn(['booking:meeting-room:zone2', 'booking:meeting-room:zone1']).granted}`);
