@@ -16,7 +16,7 @@ console.log(permission.granted);
 console.log(permission.resource);
 console.log(permission.roles);
 
-const permissions = ac.can('user').allGranted('create:own', 'booking:desk');
+const permissions = ac.can('user').allGranted('create:own', 'booking');
 console.log(permissions);
 
 const hasGranted = ac.can('user').hasGranted('create:own', 'booking:desk');

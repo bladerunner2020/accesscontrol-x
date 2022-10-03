@@ -82,17 +82,25 @@ Access.prototype.own = function own(resource, attributes) {
 };
 
 Query.prototype.allGranted = function allGranted(actionPossession, resource) {
-  const { role } = this._ || {};
-  if (!role) return [];
-  let { _grants: grants } = this;
-  if (typeof grants !== 'object') return [];
-  grants = grants[role] || {};
+  let permissions = [];
+  let { role: roles } = this._ || {};
+  if (!roles) return [];
 
-  const [action, possession] = actionPossession.split(':');
-  const permissions = Object
-    .keys(grants)
-    .filter((item) => item.indexOf(resource) === 0)
-    .map((item) => this.__getPermission(action, possession, item));
+  if (!Array.isArray(roles)) roles = [roles];
+  roles.forEach((role) => {
+    let { _grants: grants } = this;
+    if (typeof grants !== 'object') return;
+    grants = grants[role] || {};
+
+    const [action, possession] = actionPossession.split(':');
+    permissions = [
+      ...permissions,
+      ...Object
+        .keys(grants)
+        .filter((item) => item.indexOf(resource) === 0)
+        .map((item) => this.__getPermission(action, possession, item))
+    ];
+  });
 
   return permissions;
 };
