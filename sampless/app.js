@@ -3,21 +3,19 @@ const AccessControl = require('..');
 
 const ac = new AccessControl();
 
+ac.grant('admin').createAny('booking');
+
 ac.grant('user')
   .createOwn('venue')
   .createOwn('booking:desk')
   .createOwn('booking:meeting-room:zone1')
   .createOwn('booking:meeting-room:zone2');
 
+ac.grant('guest').createOwn('booking:meeting-room:zone1');
+
+// const access = ac.can('guest');
+// const result = access.hasGranted('create:own', 'booking:desk');
+
 const access = ac.can('user');
-const permission = access.createOwn('booking');
-
-console.log(permission.granted);
-console.log(permission.resource);
-console.log(permission.roles);
-
-const permissions = ac.can('user').allGranted('create:own', 'booking');
-console.log(permissions);
-
-const hasGranted = ac.can('user').hasGranted('create:own', 'booking:desk');
-console.log(hasGranted);
+const result = access.hasGranted('create:own', 'booking');
+console.log(result);

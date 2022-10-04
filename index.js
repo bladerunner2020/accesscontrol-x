@@ -81,35 +81,6 @@ Access.prototype.own = function own(resource, attributes) {
   return this;
 };
 
-Query.prototype.allGranted = function allGranted(actionPossession, resource) {
-  let permissions = [];
-  let { role: roles } = this._ || {};
-  if (!roles) return [];
-
-  if (!Array.isArray(roles)) roles = [roles];
-  roles.forEach((role) => {
-    let { _grants: grants } = this;
-    if (typeof grants !== 'object') return;
-    grants = grants[role] || {};
-
-    const [action, possession] = actionPossession.split(':');
-    permissions = [
-      ...permissions,
-      ...Object
-        .keys(grants)
-        .filter((item) => item.indexOf(resource) === 0)
-        .map((item) => this.__getPermission(action, possession, item))
-    ];
-  });
-
-  return permissions;
-};
-
-Query.prototype.hasGranted = function hasGranted(actionPossession, resource) {
-  const permissions = this.allGranted(actionPossession, resource);
-  return permissions.filter((item) => item.granted).length > 0;
-};
-
 Query.prototype.__getPermission = Query.prototype._getPermission;
 Query.prototype._getPermission = function _getPermission(action, possession, resource) {
   if (Array.isArray(resource)) {
@@ -129,6 +100,41 @@ Query.prototype._getPermission = function _getPermission(action, possession, res
     const resourcePath = resourceChain.slice(0, index + 1).join(':');
     return this.__getPermission(action, possession, resourcePath);
   }, {});
+};
+
+Query.prototype.allGranted = function allGranted(actionPossession, resource) {
+  let permissions = [];
+  let { role: roles } = this._ || {};
+  if (!roles) return [];
+
+  const match = (item) => {
+    if (resource.split(':').length < item.split(':').length) return item.indexOf(resource) === 0;
+    return resource.indexOf(item) === 0;
+  };
+
+  if (!Array.isArray(roles)) roles = [roles];
+  roles.forEach((role) => {
+    let { _grants: grants } = this;
+    if (typeof grants !== 'object') return;
+    grants = grants[role] || {};
+
+    const [action, possession] = actionPossession.split(':');
+
+    permissions = [
+      ...permissions,
+      ...Object
+        .keys(grants)
+        .filter(match)
+        .map((item) => this._getPermission(action, possession, item))
+    ];
+  });
+
+  return permissions;
+};
+
+Query.prototype.hasGranted = function hasGranted(actionPossession, resource) {
+  const permissions = this.allGranted(actionPossession, resource);
+  return permissions.filter((item) => item.granted).length > 0;
 };
 
 Permission.prototype.check = function(attribute) {
