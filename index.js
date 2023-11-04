@@ -14,6 +14,14 @@ AccessControl.prototype.grantAny = function grantAll(role, resource, attributes)
   return access;
 };
 
+AccessControl.prototype.grantOwn = function grantAll(role, resource, attributes) {
+  const access = this.grant(role);
+  Object
+    .keys(Action)
+    .forEach((action) => access._prepareAndCommit(Action[action], Possession.OWN, resource, attributes));
+  return access;
+};
+
 AccessControl.registerAction = function registerAction(name) {
   const action = name.toLowerCase();
   Action[action.toUpperCase()] = action;
@@ -79,6 +87,35 @@ Access.prototype.any = function any(resource, attributes) {
 Access.prototype.own = function own(resource, attributes) {
   Object.keys(Action).forEach((action) => this._prepareAndCommit(Action[action], Possession.OWN, resource, attributes));
   return this;
+};
+
+Query.prototype.getGroups = function getGroups(baseResource, action) {
+  const { role } = this._;
+  const grants = this._grants[role];
+  const result = { any: [], own: [] };
+  if (!grants) return result;
+
+  const resources = Object.keys(grants).filter((resource) => resource.includes(baseResource));
+
+  resources.forEach((resource) => {
+    const [, group] = resource.split(':');
+    if (group) {
+      if (grants[resource][`${action}:any`]) {
+        if (result.any[0] !== '' && !result.any.includes(group)) result.any.push(group);
+      }
+      if (grants[resource][`${action}:own`]) {
+        if (result.own[0] !== '' && !result.own.includes(group)) result.own.push(group);
+      }
+    } else {
+      if (grants[resource][`${action}:any`]) {
+        result.any = [''];
+      }
+      if (grants[resource][`${action}:own`]) {
+        result.own = [''];
+      }
+    }
+  });
+  return result;
 };
 
 Query.prototype.__getPermission = Query.prototype._getPermission;

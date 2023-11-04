@@ -19,3 +19,5 @@ ac.grant('guest').createOwn('booking:meeting-room:zone1');
 const access = ac.can('user');
 const result = access.hasGranted('create:own', 'booking');
 console.log(result);
+
+console.log(ac.can('admin').createAny('booking:desk').granted);
