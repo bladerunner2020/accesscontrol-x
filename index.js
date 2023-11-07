@@ -90,31 +90,38 @@ Access.prototype.own = function own(resource, attributes) {
 };
 
 Query.prototype.getGroups = function getGroups(baseResource, action) {
-  const { role } = this._;
-  const grants = this._grants[role];
   const result = { any: [], own: [] };
-  if (!grants) return result;
+  const { role: roleOrRoles } = this._;
+  if (typeof roleOrRoles === 'undefined') return result;
+  const roles = Array.isArray(roleOrRoles) ? roleOrRoles : [roleOrRoles];
+  // const resources = [];
 
-  const resources = Object.keys(grants).filter((resource) => resource.includes(baseResource));
-
-  resources.forEach((resource) => {
-    const [, group] = resource.split(':');
-    if (group) {
-      if (grants[resource][`${action}:any`]) {
-        if (result.any[0] !== '' && !result.any.includes(group)) result.any.push(group);
+  roles.forEach((role) => {
+    const grants = this._grants[role];
+    if (!grants) return;
+    const resources = Object.keys(grants).filter((resource) => resource.includes(baseResource));
+    resources.forEach((resource) => {
+      const [, group] = resource.split(':');
+      if (group) {
+        if (grants[resource][`${action}:any`]) {
+          if (result.any[0] !== '' && !result.any.includes(group)) result.any.push(group);
+          if (result.own[0] !== '' && !result.own.includes(group)) result.own.push(group);
+        }
+        if (grants[resource][`${action}:own`]) {
+          if (result.own[0] !== '' && !result.own.includes(group)) result.own.push(group);
+        }
+      } else {
+        if (grants[resource][`${action}:any`]) {
+          result.any = [''];
+          result.own = [''];
+        }
+        if (grants[resource][`${action}:own`]) {
+          result.own = [''];
+        }
       }
-      if (grants[resource][`${action}:own`]) {
-        if (result.own[0] !== '' && !result.own.includes(group)) result.own.push(group);
-      }
-    } else {
-      if (grants[resource][`${action}:any`]) {
-        result.any = [''];
-      }
-      if (grants[resource][`${action}:own`]) {
-        result.own = [''];
-      }
-    }
+    });
   });
+
   return result;
 };
 
